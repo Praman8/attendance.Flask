@@ -194,6 +194,9 @@
       <label for="emp_name">Full Name</label>
       <input type="text" name="emp_name" id="emp_name" placeholder="Enter full name" required>
 
+      <label for="department">Department</label>
+      <input type="text" name="department" id="department" placeholder="Enter department" required>
+
       <label for="action">Attendance Action</label>
       <select name="action" id="action" required>
         <option value="" disabled selected>Select Action</option>
@@ -208,8 +211,8 @@
       <div class="stats">
         <div>Total Entries: {{ records|length }}</div>
         <div>
-          ✅ Check-ins: {{ records|selectattr("Action", "equalto", "Check-in")|list|length }} |
-          ⛔ Check-outs: {{ records|selectattr("Action", "equalto", "Check-out")|list|length }}
+          ✅ Check-ins: {{ check_in_count }} |
+          ⛔ Check-outs: {{ check_out_count }}
         </div>
       </div>
 
@@ -222,6 +225,7 @@
           <tr>
             <th>Employee ID</th>
             <th>Full Name</th>
+            <th>Department</th>
             <th>Action</th>
             <th>Timestamp</th>
           </tr>
@@ -231,13 +235,32 @@
             <tr>
               <td>{{ record["Employee ID"] }}</td>
               <td>{{ record["Employee Name"] }}</td>
+              <td>{{ record["Department"] }}</td>
               <td class="icon {{ 'check-in' if record['Action'] == 'Check-in' else 'check-out' }}">
-                {{record["Action"]}}
+                {{ '✅ Check-in' if record['Action'] == 'Check-in' else '⛔ Check-out' }}
               </td>
-              <td>{{ record["Timestamp"] }}</td>    
+              <td>{{ record["Timestamp"] }}</td>
             </tr>
           {% endfor %}
         </tbody>
-    </table>
+      </table>
     {% endif %}
+  </div>
 
+  <script>
+    // Show current date and time in header
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById('datetime').textContent =
+        now.toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'medium' });
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Filter table rows by input
+    function filterTable() {
+      const input = document.getElementById('filterInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#attendanceTable tbody tr');
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
+      });}

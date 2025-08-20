@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, send_file
+from flask import Flask, request, render_template, redirect, url_for, flash, send_file, after_this_request
 import csv
 import os
 from datetime import datetime
@@ -50,17 +50,17 @@ def attendance():
 
         # Validation
         if not emp_id or not emp_name or not department or not action:
-            flash(("error", "❌ All fields are required."))
+            flash("❌ All fields are required.", "error")
             return redirect(url_for('attendance'))
 
         last_action = get_last_action(emp_id)
 
         # Prevent invalid actions
         if action == 'out' and last_action != 'Check-in':
-            flash(("error", "⛔ Cannot check out without checking in first."))
+            flash("⛔ Cannot check out without checking in first.", "error")
             return redirect(url_for('attendance'))
         elif action == 'in' and last_action == 'Check-in':
-            flash(("error", "⛔ You are already checked in."))
+            flash("⛔ You are already checked in.", "error")
             return redirect(url_for('attendance'))
 
         # Log the action
@@ -69,7 +69,7 @@ def attendance():
             writer = csv.writer(file)
             writer.writerow([emp_id, emp_name, department, "Check-in" if action == 'in' else "Check-out", timestamp])
 
-        flash(("success", f"✅ {emp_name} ({emp_id}) {'checked in' if action == 'in' else 'checked out'} at {timestamp}"))
+        flash(f"✅ {emp_name} ({emp_id}) {'checked in' if action == 'in' else 'checked out'} at {timestamp}", "success")
         return redirect(url_for('attendance'))
 
     # GET request
@@ -95,8 +95,16 @@ def export_today():
         for row in records:
             writer.writerow(row)
 
+    @after_this_request
+    def remove_file(response):
+        try:
+            os.remove(export_filename)
+        except Exception:
+            pass
+        return response
+
     return send_file(export_filename, as_attachment=True)
 
 if __name__ == '__main__':
     initialize_file()
-    app.run(debug=True)#cls         
+    app.run(debug=True)
